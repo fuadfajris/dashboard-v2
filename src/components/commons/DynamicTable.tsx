@@ -65,7 +65,7 @@ export default function DynamicTable<T extends object>({
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-max table-auto">
+        <table className="min-w-max w-full table-auto">
           <thead className="bg-gray-50 dark:bg-gray-700">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
