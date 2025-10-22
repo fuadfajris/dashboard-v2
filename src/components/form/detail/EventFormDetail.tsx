@@ -41,7 +41,7 @@ export default function EventFormDetail({
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr; // fallback
-    return d.toLocaleDateString("en-GB", {
+    return d.toLocaleDateString("id-ID", {
       day: "2-digit",
       month: "short",
       year: "numeric",

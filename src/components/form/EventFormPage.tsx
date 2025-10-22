@@ -238,21 +238,6 @@ export default function EventFormPage() {
 
       // ---- IMAGE VENUE ----
       if (selectedTemplate !== initialEvent?.template_id || imageVenueFile) {
-        // hapus lama
-        if (initialEvent?.image_venue) {
-          await fetch(`/api/delete-file`, {
-            method: "POST",
-            body: JSON.stringify({
-              filePath: initialEvent.image_venue,
-              scope: "event",
-              templateId: initialEvent.template_id,
-              templateUrl:
-                templates.find((t) => t.id === initialEvent.template_id)?.url ||
-                "",
-            }),
-          });
-        }
-
         let fileToUpload: File | null = imageVenueFile;
         if (!fileToUpload && initialEvent?.image_venue) {
           const res = await fetch(initialEvent.image_venue);
@@ -284,18 +269,6 @@ export default function EventFormPage() {
 
       // ---- HERO IMAGE ----
       if (heroImageFile || heroImageRemoved) {
-        if (initialEvent?.hero_image) {
-          await fetch(`/api/delete-file`, {
-            method: "POST",
-            body: JSON.stringify({
-              filePath: initialEvent.hero_image,
-              scope: "event",
-              templateId: initialEvent.template_id,
-              templateUrl: templateUrl,
-            }),
-          });
-        }
-
         if (heroImageFile) {
           const uploadForm = new FormData();
           uploadForm.append("file", heroImageFile);
@@ -314,12 +287,6 @@ export default function EventFormPage() {
         }
       }
 
-      // ---- SAVE EVENT ----
-      const method = eventId ? "PUT" : "POST";
-      const url = eventId
-        ? `${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/events`;
-
       const body = {
         ...event,
         template_id: selectedTemplate,
@@ -328,18 +295,28 @@ export default function EventFormPage() {
         hero_image: heroImageUrl,
       };
 
-      const res = await fetch(url, {
+      const req = {
+        content_key: "event",
+        content_name: eventId ? "Edit Event" : "Add Event",
+        prevValue: eventId ? { ...initialEvent, id: Number(eventId) } : null,
+        newValue: eventId ? { ...body, id: Number(eventId) } : body,
+        maker: user,
+      };
+
+      // SAVE ACTIVITY
+      const method = "POST";
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/activity`, {
         method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(req),
       });
 
-      if (!res.ok) throw new Error("Failed to save event");
+      if (!res.ok) throw new Error("Failed to create activity event");
 
-      alert("Event saved successfully!");
+      alert("Activity event saved successfully!");
       router.push("/admin/event");
     } catch (err) {
       console.error(err);

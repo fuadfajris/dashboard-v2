@@ -33,6 +33,7 @@ export default function EventDetailPage() {
         );
         if (!res.ok) throw new Error("Failed to fetch event");
         const data = await res.json();
+        console.log(data);
         setEvent(data);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : String(err));
@@ -58,14 +59,16 @@ export default function EventDetailPage() {
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
           </Button>
-          <Button
-            onClick={() =>
-              router.push(`/admin/form/event?eventId=${event.id}`)
-            }
-          >
-            <Edit className="w-4 h-4 mr-1" />
-            Edit
-          </Button>
+          {user?.role.toLowerCase() === "maker" && (
+            <Button
+              onClick={() =>
+                router.push(`/admin/form/event?eventId=${event.id}`)
+              }
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              Edit
+            </Button>
+          )}
         </div>
       </div>
 
