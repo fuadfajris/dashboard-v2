@@ -10,7 +10,7 @@ import EventFormDetail, {
 } from "@/components/form/detail/EventFormDetail";
 
 export default function EventDetailPage() {
-  const { user, token } = useUser();
+  const { user, token, isLoading: userLoading } = useUser();
   const params = useParams();
   const router = useRouter();
   const eventId = params.eventId;
@@ -18,23 +18,35 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<EventData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false); // ✅ pending activity
 
   useEffect(() => {
-    if (!token || !user || !eventId) return;
+    if (!token || !user || !eventId || userLoading) return;
 
     const fetchEvent = async () => {
       setLoading(true);
       try {
-        const res = await fetch(
+        // 1️⃣ Fetch event detail
+        const resEvent = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/events/detail?eventId=${eventId}&merchantId=${user.merchant_id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        if (!res.ok) throw new Error("Failed to fetch event");
-        const data = await res.json();
-        console.log(data);
+        if (!resEvent.ok) throw new Error("Failed to fetch event");
+        const data: EventData = await resEvent.json();
         setEvent(data);
+
+        // 2️⃣ Cek pending activity
+        const resPending = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/activity/check-pending?id=${eventId}&merchantId=${user.merchant_id}&contentKey=event`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!resPending.ok) throw new Error("Failed to check pending");
+        const pendingData = await resPending.json();
+        setPending(pendingData.pending);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -43,7 +55,7 @@ export default function EventDetailPage() {
     };
 
     fetchEvent();
-  }, [token, user?.merchant_id, eventId]);
+  }, [token, user?.merchant_id, eventId, userLoading]);
 
   if (loading) return <div className="p-6 text-center">Loading...</div>;
   if (error) return <div className="p-6 text-center text-red-500">{error}</div>;
@@ -53,17 +65,25 @@ export default function EventDetailPage() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{event.name}</h1>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">
+          {event.name}
+        </h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/admin/event")}>
+          <Button
+            className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white/90"
+            onClick={() => router.push("/admin/event")}
+          >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
           </Button>
-          {user?.role.toLowerCase() === "maker" && (
+          {user?.role.toLowerCase() === "maker" && !pending && (
             <Button
+              className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white/90"
               onClick={() =>
                 router.push(`/admin/form/event?eventId=${event.id}`)
               }
+              disabled={pending} // ✅ disable jika ada pending
+              title={pending ? "Cannot edit while pending approval" : ""}
             >
               <Edit className="w-4 h-4 mr-1" />
               Edit
@@ -72,13 +92,8 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      {/* ✅ Komponen Reusable */}
+      {/* Komponen Reusable */}
       <EventFormDetail mode="detail" event={event} />
-      {/* <EventFormDetail
-        mode="activity"
-        prevValue={activity.prevValue}
-        newValue={activity.newValue}
-      /> */}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "@/context/SidebarContext";
 import { useUser } from "@/context/UserContext";
 import {
+  Bell,
   CalendarIcon,
   ChevronDown,
   EllipsisIcon,
@@ -28,6 +29,11 @@ const navItems: NavItem[] = [
   //   name: "Menu",
   //   subItems: [{ name: "Dashboard", path: "/dashboard" }],
   // },
+  {
+    icon: <Bell />,
+    name: "Activity",
+    path: "/admin/activity",
+  },
   {
     icon: <GridIcon />,
     name: "Dashboard",

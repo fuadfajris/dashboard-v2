@@ -12,6 +12,7 @@ export default function AdminDynamicFormPage({
   const FormComponent =
     {
       event: dynamic(() => import("@/components/form/EventFormPage")),
+      lineup: dynamic(() => import("@/components/form/LineupFormPage")),
     //   merchant: dynamic(() => import("@/components/form/MerchantFormPage")),
     }[formType] || null;
 

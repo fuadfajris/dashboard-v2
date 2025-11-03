@@ -330,126 +330,170 @@ export default function EventFormPage() {
   const minEndDate = event.start_date || today;
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">
+    <div className="grid gap-4">
+      <h1 className="text-lg font-bold mb-4 text-gray-800 dark:text-white/90">
         {eventId ? "Edit Event" : "Add Event"}
       </h1>
 
       {/* Form fields */}
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            type="text"
-            placeholder="Event Name"
-            className="border p-2 rounded w-full"
-            value={event.name}
-            onChange={(e) => setEvent({ ...event, name: e.target.value })}
-          />
-          <input
-            type="text"
-            placeholder="Location"
-            className="border p-2 rounded w-full"
-            value={event.location}
-            onChange={(e) => setEvent({ ...event, location: e.target.value })}
+          <div>
+            <p className="text-gray-800 dark:text-white/90 pb-2">Event Name</p>
+            <input
+              type="text"
+              placeholder="Event Name"
+              className="border p-2 rounded w-full bg-input"
+              value={event.name}
+              onChange={(e) => setEvent({ ...event, name: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <p className="text-gray-800 dark:text-white/90 pb-2">Location</p>
+            <input
+              type="text"
+              placeholder="Location"
+              className="border p-2 rounded w-full bg-input"
+              value={event.location}
+              onChange={(e) => setEvent({ ...event, location: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div>
+          <p className="text-gray-800 dark:text-white/90 pb-2">Description</p>
+          <textarea
+            placeholder="Description"
+            className="border p-2 rounded w-full h-32 bg-input"
+            value={event.description}
+            onChange={(e) =>
+              setEvent({ ...event, description: e.target.value })
+            }
           />
         </div>
 
-        <textarea
-          placeholder="Description"
-          className="border p-2 rounded w-full h-32"
-          value={event.description}
-          onChange={(e) => setEvent({ ...event, description: e.target.value })}
-        />
-
+        {/* Start - End Date */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            type="date"
-            min={today}
-            value={event.start_date}
-            className="border p-2 rounded w-full"
-            onChange={(e) => setEvent({ ...event, start_date: e.target.value })}
-          />
-          <input
-            type="date"
-            min={minEndDate}
-            value={event.end_date}
-            className="border p-2 rounded w-full"
-            onChange={(e) => setEvent({ ...event, end_date: e.target.value })}
-          />
+          <div>
+            <p className="text-gray-800 dark:text-white/90 pb-2">Start Date</p>
+            <input
+              type="date"
+              min={today}
+              value={event.start_date}
+              className="border p-2 rounded w-full bg-input"
+              onChange={(e) =>
+                setEvent({ ...event, start_date: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <p className="text-gray-800 dark:text-white/90 pb-2">End Date</p>
+            <input
+              type="date"
+              min={minEndDate}
+              value={event.end_date}
+              className="border p-2 rounded w-full bg-input"
+              onChange={(e) => setEvent({ ...event, end_date: e.target.value })}
+            />
+          </div>
         </div>
 
+        {/* Capacity and status */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            type="number"
-            placeholder="Capacity"
-            className="border p-2 rounded w-full"
-            value={event.capacity}
-            onChange={(e) =>
-              setEvent({ ...event, capacity: parseInt(e.target.value) })
-            }
-          />
-          <select
-            className="border p-2 rounded w-full"
-            value={event.status ? "true" : "false"}
-            onChange={(e) =>
-              setEvent({ ...event, status: e.target.value === "true" })
-            }
-          >
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
+          <div>
+            <p className="text-gray-800 dark:text-white/90 pb-2">Capacity</p>
+            <input
+              type="number"
+              placeholder="Capacity"
+              className="border p-2 rounded w-full bg-input"
+              value={event.capacity}
+              onChange={(e) =>
+                setEvent({ ...event, capacity: parseInt(e.target.value) })
+              }
+            />
+          </div>
+
+          <div>
+            <p className="text-gray-800 dark:text-white/90 pb-2">Status</p>
+            <select
+              className="border p-2 rounded w-full bg-input"
+              value={event.status ? "true" : "false"}
+              onChange={(e) =>
+                setEvent({ ...event, status: e.target.value === "true" })
+              }
+            >
+              <option value="true" className="!text-gray-800">
+                Active
+              </option>
+              <option value="false" className="!text-gray-800">
+                Inactive
+              </option>
+            </select>
+          </div>
         </div>
 
         {/* Image venue */}
-        <div className="flex items-center gap-4">
-          {event.image_venue && (
-            <div className="relative w-32 h-32 border rounded overflow-hidden">
-              <Image
-                src={event.image_venue}
-                alt="Event Image"
-                fill
-                className="object-cover"
-              />
-              <button
-                type="button"
-                onClick={handleRemoveImageVenue}
-                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded"
-              >
-                <Trash className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange(e, "venue")}
-          />
+        <div>
+          <p className="text-gray-800 dark:text-white/90 pb-2">Image Vanue</p>
+          <div className="items-center gap-4 grid grid-cols-1 md:grid-cols-2">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, "venue")}
+              className="w-full border rounded-lg p-2 mb-2 bg-input"
+            />
+            {event.image_venue && (
+              <div className="relative h-32 overflow-hidden">
+                <Image
+                  src={event.image_venue}
+                  alt="Event Image"
+                  width={100}
+                  height={100}
+                  className="object-cover w-auto h-full rounded"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImageVenue}
+                  className="absolute top-1 left-1 p-1 bg-red-500 text-white rounded"
+                >
+                  <Trash className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Hero image */}
-        <div className="flex items-center gap-4">
-          {event.hero_image && (
-            <div className="relative w-32 h-32 border rounded overflow-hidden">
-              <Image
-                src={event.hero_image}
-                alt="Hero Image"
-                fill
-                className="object-cover"
-              />
-              <button
-                type="button"
-                onClick={handleRemoveHeroImage}
-                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded"
-              >
-                <Trash className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange(e, "hero")}
-          />
+        <div>
+          <p className="text-gray-800 dark:text-white/90 pb-2">Hero Image</p>
+          <div className="items-center gap-4 grid grid-cols-1 md:grid-cols-2">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, "hero")}
+              className="w-full border rounded-lg p-2 mb-2 bg-input"
+            />
+            {event.hero_image && (
+              <div className="relative h-32 overflow-hidden">
+                <Image
+                  src={event.hero_image}
+                  alt="Hero Image"
+                  width={100}
+                  height={100}
+                  className="object-cover w-auto h-full rounded"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveHeroImage}
+                  className="absolute top-1 left-1 p-1 bg-red-500 text-white rounded"
+                >
+                  <Trash className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

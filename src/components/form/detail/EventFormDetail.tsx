@@ -38,6 +38,8 @@ export default function EventFormDetail({
 
   if (!displayEvent) return <div>No data available</div>;
 
+  const showToggle = mode === "activity" && prevValue && newValue;
+
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr; // fallback
@@ -48,20 +50,33 @@ export default function EventFormDetail({
     });
   };
 
-  const showToggle = mode === "activity" && prevValue && newValue;
+  // 🔍 Deteksi perubahan antar nilai
+  const isChanged = (field: keyof EventData) => {
+    if (!prevValue || !newValue) return false;
+    return prevValue[field] !== newValue[field];
+  };
+
+  // ✨ Tambah class highlight jika berubah
+  const highlightClass = (field: keyof EventData) =>
+    showAfter && isChanged(field)
+      ? "bg-yellow-100 dark:bg-yellow-800 rounded transition-all duration-300"
+      : "";
 
   return (
-    <div className="space-y-4">
+    <div className="grid gap-4">
+      {/* Tombol switch Before/After */}
       {showToggle && (
         <div className="flex gap-2 mb-4">
           <Button
             variant={showAfter ? "default" : "outline"}
+            className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white/90"
             onClick={() => setShowAfter(true)}
           >
             After
           </Button>
           <Button
             variant={!showAfter ? "default" : "outline"}
+            className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white/90"
             onClick={() => setShowAfter(false)}
           >
             Before
@@ -69,64 +84,88 @@ export default function EventFormDetail({
         </div>
       )}
 
-      {/* Info */}
-      <div className="space-y-2 grid grid-cols-12 gap-3">
-        <div className="col-span-12 md:col-span-6">
-          <strong>Name:</strong> {displayEvent.name}
+      <div className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-lg border dark:border-gray-700">
+        {/* Event name & location */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <p className={`text-gray-800 dark:text-white/90 pb-2 ${highlightClass("name")}`}>
+            <strong>Event Name:</strong> {displayEvent.name}
+          </p>
+          <p className={`text-gray-800 dark:text-white/90 pb-2 ${highlightClass("location")}`}>
+            <strong>Location:</strong> {displayEvent.location}
+          </p>
         </div>
-        <div className="col-span-12 md:col-span-6">
-          <strong>Location:</strong> {displayEvent.location}
+
+        {/* Description */}
+        <div className={highlightClass("description")}>
+          <p className="text-gray-800 dark:text-white/90 pb-2">
+            <strong>Description:</strong>
+          </p>
+          <p className="text-gray-800 dark:text-white/90 pb-2">
+            {displayEvent.description}
+          </p>
         </div>
-        <div className="col-span-12">
-          <strong>Description:</strong> {displayEvent.description}
+
+        {/* Start - End Date */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <p className={`text-gray-800 dark:text-white/90 pb-2 ${highlightClass("start_date")}`}>
+            <strong>Start Date:</strong> {formatDate(displayEvent.start_date)}
+          </p>
+          <p className={`text-gray-800 dark:text-white/90 pb-2 ${highlightClass("end_date")}`}>
+            <strong>End Date:</strong> {formatDate(displayEvent.end_date)}
+          </p>
         </div>
-        <div className="col-span-12 md:col-span-6">
-          <strong>Start Date:</strong> {formatDate(displayEvent.start_date)}
+
+        {/* Capacity and status */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <p className={`text-gray-800 dark:text-white/90 pb-2 ${highlightClass("capacity")}`}>
+            <strong>Capacity:</strong> {displayEvent.capacity}
+          </p>
+          <p className={`text-gray-800 dark:text-white/90 pb-2 ${highlightClass("status")}`}>
+            <strong>Status:</strong>{" "}
+            {displayEvent.status ? (
+              <Badge className="bg-green-500">Active</Badge>
+            ) : (
+              <Badge className="bg-gray-400">Inactive</Badge>
+            )}
+          </p>
         </div>
-        <div className="col-span-12 md:col-span-6">
-          <strong>End Date:</strong> {formatDate(displayEvent.end_date)}
-        </div>
-        <div className="col-span-12 md:col-span-6">
-          <strong>Capacity:</strong> {displayEvent.capacity}
-        </div>
-        <div className="col-span-12 md:col-span-6">
-          <strong>Status:</strong>{" "}
-          {displayEvent.status ? (
-            <Badge className="bg-green-500">Active</Badge>
-          ) : (
-            <Badge className="bg-gray-400">Inactive</Badge>
+
+        {/* Images */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {displayEvent.image_venue && (
+            <div className={highlightClass("image_venue")}>
+              <p className="text-gray-800 dark:text-white/90 pb-2">
+                <strong>Venue Image:</strong>
+              </p>
+              <div className="w-full h-48 relative rounded overflow-hidden border">
+                <Image
+                  src={displayEvent.image_venue}
+                  alt="Venue Image"
+                  width={100}
+                  height={100}
+                  className="object-cover h-48 w-auto transition-all duration-300"
+                />
+              </div>
+            </div>
+          )}
+
+          {displayEvent.hero_image && (
+            <div className={highlightClass("hero_image")}>
+              <p className="text-gray-800 dark:text-white/90 pb-2">
+                <strong>Hero Image:</strong>
+              </p>
+              <div className="w-full h-48 relative rounded overflow-hidden border">
+                <Image
+                  src={displayEvent.hero_image}
+                  alt="Hero Image"
+                  width={100}
+                  height={100}
+                  className="object-cover h-48 w-auto transition-all duration-300"
+                />
+              </div>
+            </div>
           )}
         </div>
-      </div>
-
-      {/* Images */}
-      <div className="space-y-2">
-        {displayEvent.image_venue && (
-          <div>
-            <p className="font-semibold">Venue Image</p>
-            <div className="w-full h-48 relative border rounded overflow-hidden">
-              <Image
-                src={displayEvent.image_venue}
-                alt="Venue Image"
-                fill
-                className="object-cover"
-              />
-            </div>
-          </div>
-        )}
-        {displayEvent.hero_image && (
-          <div>
-            <p className="font-semibold">Hero Image</p>
-            <div className="w-full h-48 relative border rounded overflow-hidden">
-              <Image
-                src={displayEvent.hero_image}
-                alt="Hero Image"
-                fill
-                className="object-cover"
-              />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
