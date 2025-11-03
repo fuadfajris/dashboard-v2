@@ -1,10 +1,10 @@
 "use client";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
-// import { Dropdown } from "../ui/dropdown/Dropdown";
-// import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
+import { Dropdown } from "../commons/dropdown/Dropdown";
+import { DropdownItem } from "../commons/dropdown/DropdownItem";
 
 export default function UserDropdown() {
   const { user, logout, isLoading } = useUser();
@@ -74,7 +74,7 @@ export default function UserDropdown() {
         </svg>
       </button>
 
-      {/* <Dropdown
+      <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
         className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white dark:bg-gray-900 p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
@@ -161,7 +161,7 @@ export default function UserDropdown() {
           </svg>
           Sign out
         </button>
-      </Dropdown> */}
+      </Dropdown>
     </div>
   );
 }

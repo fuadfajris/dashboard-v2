@@ -39,10 +39,22 @@ interface OrderTransaction {
   user: UserInfo;
 }
 
+interface Checkin {
+  id: number;
+  checked_in_at: string;
+  ticket_detail: {
+    id: number;
+    gender: string;
+    name: string;
+    order: { id: number; event_id: number };
+  };
+}
+
 interface DashboardStats {
   totalOrders: number;
   totalTickets: number;
   genderStats: { male: number; female: number };
+  totalCheckin: number;
   notCheckedIn: number;
   monthlySales: { month: string; total: number }[];
   ticketTypeStats: { type: string; total: number }[];
@@ -83,12 +95,22 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/order-transactions?event_id=${selectedEventId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const data: OrderTransaction[] = await res.json();
-        processDashboardData(data);
+        // Ambil order transactions
+        const [orderRes, checkinRes] = await Promise.all([
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/order-transactions?event_id=${selectedEventId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          ),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/checkins/all-checkins?event_id=${selectedEventId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          ),
+        ]);
+
+        const orders: OrderTransaction[] = await orderRes.json();
+        const checkins: Checkin[] = await checkinRes.json();
+
+        processDashboardData(orders, checkins);
       } catch (err) {
         console.error("Error fetch dashboard:", err);
       } finally {
@@ -99,31 +121,25 @@ export default function DashboardPage() {
   }, [selectedEventId, token]);
 
   /** Olah data dashboard */
-  const processDashboardData = (orders: OrderTransaction[]) => {
+  const processDashboardData = (
+    orders: OrderTransaction[],
+    checkins: Checkin[]
+  ) => {
     const totalOrders = orders.length;
     const totalTickets = orders.reduce((sum, o) => sum + o.quantity, 0);
 
-    // Gender & check-in
-    let totalCheckin = 0;
-    const genderStats = orders.reduce(
-      (acc, o) => {
-        o.ticket_details.forEach((d) => {
-          const g = d.gender?.toLowerCase();
-          if (g?.includes("male") || g?.includes("laki")) {
-            acc.male += 1;
-            totalCheckin++;
-          } else if (g?.includes("female") || g?.includes("perempuan")) {
-            acc.female += 1;
-            totalCheckin++;
-          }
-        });
-        return acc;
-      },
-      { male: 0, female: 0 }
-    );
+    // Hitung total checkin & gender stats dari API checkins
+    const genderStats = { male: 0, female: 0 };
+    checkins.forEach((c) => {
+      const g = c.ticket_detail.gender?.toLowerCase();
+      if (g?.includes("male") || g?.includes("laki")) genderStats.male++;
+      else if (g?.includes("female") || g?.includes("perempuan"))
+        genderStats.female++;
+    });
+    const totalCheckin = checkins.length;
     const notCheckedIn = totalTickets - totalCheckin;
 
-    // Monthly sales map (format YYYY-MM)
+    // Monthly sales
     const monthlySalesMap: Record<string, number> = {};
     orders.forEach((o) => {
       const date = new Date(o.order_date);
@@ -160,6 +176,7 @@ export default function DashboardPage() {
       totalOrders,
       totalTickets,
       genderStats,
+      totalCheckin,
       notCheckedIn,
       monthlySales,
       ticketTypeStats,
@@ -167,7 +184,7 @@ export default function DashboardPage() {
     });
   };
 
-  /** Monthly sales data berdasarkan selectedYear */
+  /** Monthly sales per year */
   const allMonths = Array.from({ length: 12 }, (_, i) => {
     const month = (i + 1).toString().padStart(2, "0");
     return `${selectedYear}-${month}`;
@@ -184,46 +201,38 @@ export default function DashboardPage() {
     return date.toLocaleString("en-US", { month: "short" });
   });
 
-  /** Available years */
   const availableYears = Array.from(
     new Set(
       dashboard?.monthlySales.map((d) => Number(d.month.split("-")[0])) || []
     )
   ).sort((a, b) => b - a);
 
-  /** Check-in chart */
   const series = [
     dashboard ? dashboard.genderStats.male : 0,
     dashboard ? dashboard.genderStats.female : 0,
     dashboard ? dashboard.notCheckedIn : 0,
   ];
+
   const options: ApexOptions = {
     labels: ["Male", "Female", "Not Checkin"],
     colors: ["#3b82f6", "#ec4899", "#999999"],
-    plotOptions: { pie: { startAngle: -90, endAngle: 90, offsetY: 10 } },
-    grid: { padding: { bottom: -100 } },
     legend: { position: "bottom", horizontalAlign: "center", fontSize: "14px" },
   };
 
-  // Ticket type chart
   const ticketTypeSeries = dashboard
     ? dashboard.ticketTypeStats.map((t) => t.total)
     : [];
   const ticketTypeLabels = dashboard
     ? dashboard.ticketTypeStats.map((t) => t.type)
     : [];
+
   const ticketTypeOptions: ApexOptions = {
     labels: ticketTypeLabels,
-    dataLabels: {
-      enabled: true,
-      formatter: (val) => Number(val).toFixed(0) + "%",
-    },
     legend: { position: "bottom", horizontalAlign: "center", fontSize: "14px" },
   };
 
   return (
     <>
-      {/* Select event */}
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] mb-5">
         <div className="w-full md:w-1/2 px-6 py-5">
           <label className="block text-sm font-medium text-gray-800 dark:text-white/90 mb-1">
@@ -249,47 +258,41 @@ export default function DashboardPage() {
       </div>
 
       {loading ? (
-        <p className="text-gray-800 dark:text-white/90">Loading dashboard...</p>
+        <p>Loading dashboard...</p>
       ) : !dashboard ? (
-        <p className="text-gray-800 dark:text-white/90">
-          Please select an event to see dashboard.
-        </p>
+        <p>Please select an event to see dashboard.</p>
       ) : (
         <>
           <div className="grid grid-cols-12 gap-4 md:gap-6">
             <div className="col-span-12 space-y-6 xl:col-span-7 flex flex-col justify-between">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-                {/* Order */}
+                {/* Order count */}
                 <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
                   <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
                     <BoxIcon className="text-gray-800 size-6 dark:text-white/90" />
                   </div>
-                  <div className="flex items-end justify-between mt-5">
-                    <div>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Total Order
-                      </span>
-                      <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-                        {dashboard.totalOrders}
-                      </h4>
-                    </div>
+                  <div className="mt-5">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      Total Orders
+                    </span>
+                    <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+                      {dashboard.totalOrders}
+                    </h4>
                   </div>
                 </div>
 
-                {/* Ticket Sold */}
+                {/* Total Tickets */}
                 <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
                   <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
                     <TicketsIcon className="text-gray-800 size-6 dark:text-white/90" />
                   </div>
-                  <div className="flex items-end justify-between mt-5">
-                    <div>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Total Tickets Sold
-                      </span>
-                      <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-                        {dashboard.totalTickets}
-                      </h4>
-                    </div>
+                  <div className="mt-5">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      Total Tickets Sold
+                    </span>
+                    <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+                      {dashboard.totalTickets}
+                    </h4>
                   </div>
                 </div>
               </div>
@@ -306,76 +309,23 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Checkin */}
+            {/* Checkin chart */}
             <div className="col-span-12 xl:col-span-5">
-              <div className="h-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-white/[0.03]">
-                <div className="h-full items-center px-5 py-5 bg-white shadow-default rounded-2xl dark:bg-gray-900 sm:px-6 sm:py-6">
-                  <div className="text-left">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                      Checkin by gender
-                    </h3>
-                  </div>
-                  <ReactApexChart
-                    options={options}
-                    series={series}
-                    type="donut"
-                    height={250}
-                  />
-                  <div className="mt-6 text-center text-sm text-gray-500">
-                    Congratulations! There are{" "}
-                    {dashboard.totalTickets - dashboard.notCheckedIn} attendees
-                    who have already checked in from {dashboard.totalTickets}{" "}
-                    ticket. Keep up the great work!
-                  </div>
+              <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-5">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white/90">
+                  Check-in by Gender
+                </h3>
+                <ReactApexChart
+                  options={options}
+                  series={series}
+                  type="donut"
+                  height={250}
+                />
+                <div className="mt-6 text-center text-sm text-gray-500">
+                  ✅ {dashboard.totalCheckin} already checked in from{" "}
+                  {dashboard.totalTickets} tickets.
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Ticket Type */}
-            <div className="rounded-2xl border border-gray-200 p-4 lg:p-6 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
-                Ticket Type
-              </h3>
-              <ReactApexChart
-                options={ticketTypeOptions}
-                series={ticketTypeSeries}
-                type="donut"
-                height={250}
-              />
-            </div>
-
-            {/* Recent Order */}
-            <div className="lg:col-span-2 rounded-2xl border border-gray-200 p-4 lg:p-6 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
-                Recent Order
-              </h3>
-              <table className="min-w-full text-sm text-gray-700 dark:text-gray-300">
-                <thead>
-                  <tr className="border-b bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
-                    <th className="p-2 text-left">Name</th>
-                    <th className="p-2 text-left">Ticket</th>
-                    <th className="p-2 text-left">Qty</th>
-                    <th className="p-2 text-left">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dashboard.recentOrders.map((o) => (
-                    <tr
-                      key={o.id}
-                      className="border-b bg-white dark:bg-gray-900 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <td className="p-2">{o.user.name}</td>
-                      <td className="p-2">{o.ticket.ticket_type}</td>
-                      <td className="p-2">{o.quantity}</td>
-                      <td className="p-2">
-                        {new Date(o.order_date).toLocaleDateString("id-ID")}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </div>
         </>
