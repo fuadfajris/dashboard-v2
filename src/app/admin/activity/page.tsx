@@ -9,6 +9,8 @@ import {
 import { useUser } from "@/context/UserContext";
 import DynamicTable from "@/components/commons/DynamicTable";
 import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { getStatusBadge } from "@/lib/statusBadge";
 
 interface Activity {
   id: number;
@@ -68,10 +70,14 @@ export default function ActivityPage() {
   }, [pagination, sorting, user, token]);
 
   const columns: ColumnDef<Activity>[] = [
-    { header: "ID", accessorKey: "id" },
+    { header: "ID", accessorKey: "id", size: 60 },
     { header: "Content Key", accessorKey: "content_key" },
     { header: "Content Name", accessorKey: "content_name" },
-    { header: "Status", accessorKey: "status" },
+    {
+      header: "Status",
+      accessorKey: "status",
+      cell: (info) => getStatusBadge(info.getValue() as string),
+    },
     {
       header: "Created At",
       accessorKey: "created_at",
@@ -110,7 +116,9 @@ export default function ActivityPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Activity</h1>
+      <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">
+        Activity
+      </h1>
       <DynamicTable
         columns={columns}
         data={data}

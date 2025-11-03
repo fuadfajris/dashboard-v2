@@ -81,3 +81,10 @@ body {
            dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90;
   }
 }
+
+@layer components {
+  .bg-input {
+    @apply border border-gray-200 bg-white text-gray-800 
+           dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90;
+  }
+}
