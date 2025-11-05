@@ -311,7 +311,7 @@ export default function DashboardPage() {
 
             {/* Checkin chart */}
             <div className="col-span-12 xl:col-span-5">
-              <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-5">
+              <div className="rounded-2xl border border-gray-200 h-full bg-white dark:border-gray-800 dark:bg-white/[0.03] p-5">
                 <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white/90">
                   Check-in by Gender
                 </h3>
@@ -322,10 +322,59 @@ export default function DashboardPage() {
                   height={250}
                 />
                 <div className="mt-6 text-center text-sm text-gray-500">
-                  ✅ {dashboard.totalCheckin} already checked in from{" "}
-                  {dashboard.totalTickets} tickets.
+                  Congratulations! There are{" "}
+                  {dashboard.totalTickets - dashboard.notCheckedIn} attendees
+                  who have already checked in from {dashboard.totalTickets}{" "}
+                  ticket. Keep up the great work!
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Ticket Type */}
+            <div className="rounded-2xl border border-gray-200 p-4 lg:p-6 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
+                Ticket Type
+              </h3>
+              <ReactApexChart
+                options={ticketTypeOptions}
+                series={ticketTypeSeries}
+                type="donut"
+                height={250}
+              />
+            </div>
+
+            {/* Recent Order */}
+            <div className="lg:col-span-2 rounded-2xl border border-gray-200 p-4 lg:p-6 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
+                Recent Order
+              </h3>
+              <table className="min-w-full text-sm text-gray-700 dark:text-gray-300">
+                <thead>
+                  <tr className="border-b bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+                    <th className="p-2 text-left">Name</th>
+                    <th className="p-2 text-left">Ticket</th>
+                    <th className="p-2 text-left">Qty</th>
+                    <th className="p-2 text-left">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dashboard.recentOrders.map((o) => (
+                    <tr
+                      key={o.id}
+                      className="border-b bg-white dark:bg-gray-900 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <td className="p-2">{o.user.name}</td>
+                      <td className="p-2">{o.ticket.ticket_type}</td>
+                      <td className="p-2">{o.quantity}</td>
+                      <td className="p-2">
+                        {new Date(o.order_date).toLocaleDateString("id-ID")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </>
