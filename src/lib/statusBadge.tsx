@@ -16,6 +16,7 @@ export const getStatusBadge = (status?: string) => {
       );
     case "failed":
     case "error":
+    case "inactive":
     case "rejected":
       return (
         <Badge className={`${base} bg-red-500 text-white`}>{status}</Badge>
