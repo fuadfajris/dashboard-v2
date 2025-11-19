@@ -62,7 +62,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const { user, token } = useUser();
+  const { user, token, logout } = useUser();
   const [events, setEvents] = useState<EventItem[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -78,6 +78,12 @@ export default function DashboardPage() {
           `${process.env.NEXT_PUBLIC_API_URL}/events?merchantId=${user.merchant_id}&page=1&perPage=0`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+
         const json = await res.json();
         const data = Array.isArray(json.data) ? json.data : [];
         setEvents(data);

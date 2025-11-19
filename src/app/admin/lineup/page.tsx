@@ -31,7 +31,7 @@ type LineUp = {
 };
 
 export default function LineupPage() {
-  const { user, token } = useUser();
+  const { user, token, logout } = useUser();
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [eventId, setEventId] = useState<number | null>(null);
@@ -52,7 +52,12 @@ export default function LineupPage() {
           `${process.env.NEXT_PUBLIC_API_URL}/events?merchantId=${user?.merchant_id}&page=1&perPage=0`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        if (!res.ok) throw new Error("Failed to fetch events");
+
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+        
         const data = await res.json();
         const eventsData = Array.isArray(data) ? data : data.data || [];
         setEvents(eventsData);

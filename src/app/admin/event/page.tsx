@@ -43,7 +43,7 @@ type RawTemplate = {
 };
 
 export default function EventPage() {
-  const { user, token } = useUser();
+  const { user, token, logout } = useUser();
   const router = useRouter();
 
   const [events, setEvents] = useState<Event[]>([]);
@@ -120,6 +120,11 @@ export default function EventPage() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
+      if (res.status === 401) {
+        logout();
+        return;
+      }
 
       if (!res.ok) throw new Error("Failed to fetch events");
       const result = await res.json();

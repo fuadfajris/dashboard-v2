@@ -36,7 +36,7 @@ type PaginatedResponse = {
 };
 
 export default function OrderPage() {
-  const { user, token } = useUser();
+  const { user, token, logout } = useUser();
   const router = useRouter();
 
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -61,6 +61,12 @@ export default function OrderPage() {
           `${process.env.NEXT_PUBLIC_API_URL}/events?merchantId=${user.merchant_id}&page=1&perPage=0`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+
         const json = await res.json();
         const data = Array.isArray(json.data) ? json.data : [];
         setEvents(data);
